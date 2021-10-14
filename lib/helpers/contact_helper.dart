@@ -1,6 +1,8 @@
 /*
   This Class Contains all attributes and methods to init database Configuration
  */
+import 'dart:ffi';
+
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -55,7 +57,32 @@ class ContactHelper {
               $emailColumn TEXT);''');
     });
   }
+
+  Future<Contact> saveContact(Contact contact) async {
+    Database dbContact = await db;
+    contact.id = await dbContact.insert(tableName, contact.toMap());
+    return contact;
+  }
+
+  // Will return contact from past id
+  getContact(int id) async {
+    Database dbContact = await db;
+
+    List<Map<String, dynamic>> maps = await dbContact.query(tableName,
+        columns: [idColumn, nameColumn, emailColumn, phoneColumn, imgColumn],
+        where: "$idColumn = ?",
+        whereArgs: [id]);
+    if (maps.first.isNotEmpty) {
+      return Contact.fromMap(maps.first);
+    } else {
+      return null;
+    }
+  }
 }
+
+/*
+  It's responsible for save a new contact in the database contact
+ */
 
 /*
   The class Contact is a model for our app
@@ -68,7 +95,7 @@ class Contact {
   late String phone;
   late String img;
 
-  Contact.fromMap(Map map) {
+  Contact.fromMap(Map<String, dynamic> map) {
     id = map[idColumn];
     name = map[nameColumn];
     email = map[emailColumn];
@@ -76,7 +103,7 @@ class Contact {
     phone = map[phoneColumn];
   }
 
-  Map toMap() {
+  Map<String, dynamic> toMap() {
     Map<String, dynamic> map = {
       nameColumn: name,
       phoneColumn: phone,
