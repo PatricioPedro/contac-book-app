@@ -47,25 +47,33 @@ class ContactHelper {
     final path = join(databasesPath, "contact.db");
 
     // Will open our database relatively our config, and will create our table at first
-    return await openDatabase(path, version: 1,
-        onCreate: (Database db, int newerVersion) async {
-      db.execute('''CREATE TABLE $tableName(
+    try {
+      return await openDatabase(path, version: 1,
+          onCreate: (Database db, int newerVersion) async {
+        db.execute('''CREATE TABLE $tableName(
               $idColumn INTEGER,
               $nameColumn TEXT, 
               $phoneColumn TEXT,
               $imgColumn TEXT,
               $emailColumn TEXT);''');
-    });
+      });
+    } catch (e) {
+      throw Exception(e);
+    }
   }
 
   Future<Contact> saveContact(Contact contact) async {
+    /*
+      THis method will save a contact into bd
+     */
     Database dbContact = await db;
     contact.id = await dbContact.insert(tableName, contact.toMap());
     return contact;
   }
 
-  // Will return contact from past id
-  getContact(int id) async {
+  Future getContact(int id) async {
+    // Will return contact from past id
+
     Database dbContact = await db;
 
     List<Map<String, dynamic>> maps = await dbContact.query(tableName,
@@ -78,15 +86,48 @@ class ContactHelper {
       return null;
     }
   }
+
+  Future<int> deleteContact(int id) async {
+    /*
+    Will delete a contact 
+    The parameter id is required
+  */
+    Database dbContact = await db;
+    return dbContact.delete(tableName, where: "$idColumn = ?", whereArgs: [id]);
+  }
+
+  Future<int> updateContact(Contact contact) async {
+    /*
+      Will update a contact
+     */
+    Database dbContact = await db;
+
+    return await dbContact.update(tableName, contact.toMap(),
+        where: "$idColumn = ?", whereArgs: [contact.id]);
+  }
+
+  Future<List<Contact>> getAllContacts() async {
+    /*
+      Will get all contacts from database
+     */
+    Database dbContact = await db;
+
+    List listMap = await dbContact.rawQuery("SELECT * FROM $tableName");
+
+    return listMap.map((contact) => Contact.fromMap(contact)).toList();
+  }
+
+  totalRecords() async {
+    Database dbContact = await db;
+    return Sqflite.firstIntValue(
+        await dbContact.rawQuery("SELECT COUNT(*) FROM $tableName"));
+  }
+
+  closeDB() async {
+    Database dbContact = await db;
+    dbContact.close();
+  }
 }
-
-/*
-  It's responsible for save a new contact in the database contact
- */
-
-/*
-  The class Contact is a model for our app
-*/
 
 class Contact {
   late int id;
@@ -94,7 +135,7 @@ class Contact {
   late String email;
   late String phone;
   late String img;
-
+  Contact();
   Contact.fromMap(Map<String, dynamic> map) {
     id = map[idColumn];
     name = map[nameColumn];
