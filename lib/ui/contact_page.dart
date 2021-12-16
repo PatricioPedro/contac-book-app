@@ -23,7 +23,7 @@ class _ContactPageState extends State<ContactPage> {
   final phoneController = TextEditingController();
   final _imgPicker = ImagePicker();
   bool _isEdited = false;
-
+  final GlobalKey<FormState> _key = GlobalKey();
   final nameNode = FocusNode();
 
   @override
@@ -90,134 +90,149 @@ class _ContactPageState extends State<ContactPage> {
           padding: const EdgeInsets.all(14.0),
           child: SizedBox(
             width: double.infinity,
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      showModalBottomSheet(
-                          context: context,
-                          builder: (context) {
-                            return BottomSheet(
-                                onClosing: () {},
-                                builder: (context) => Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        IconButton(
-                                            onPressed: () {
-                                              _imgPicker
-                                                  .pickImage(
-                                                      source:
-                                                          ImageSource.camera)
-                                                  .then((file) {
-                                                setState(() {
-                                                  editedContact.img =
-                                                      file?.path;
+            child: Form(
+              key: _key,
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        showModalBottomSheet(
+                            context: context,
+                            builder: (context) {
+                              return BottomSheet(
+                                  onClosing: () {},
+                                  builder: (context) => Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          IconButton(
+                                              onPressed: () {
+                                                _imgPicker
+                                                    .pickImage(
+                                                        source:
+                                                            ImageSource.camera)
+                                                    .then((file) {
+                                                  setState(() {
+                                                    editedContact.img =
+                                                        file?.path;
+                                                  });
                                                 });
-                                              });
-                                            },
-                                            icon: const Icon(Icons.photo)),
-                                        IconButton(
-                                            onPressed: () {
-                                              _imgPicker
-                                                  .pickImage(
-                                                      source:
-                                                          ImageSource.gallery)
-                                                  .then((file) {
-                                                setState(() {
-                                                  editedContact.img =
-                                                      file?.path;
+                                              },
+                                              icon: const Icon(Icons.photo)),
+                                          IconButton(
+                                              onPressed: () {
+                                                _imgPicker
+                                                    .pickImage(
+                                                        source:
+                                                            ImageSource.gallery)
+                                                    .then((file) {
+                                                  setState(() {
+                                                    editedContact.img =
+                                                        file?.path;
+                                                  });
                                                 });
-                                              });
-                                            },
-                                            icon: const Icon(Icons.camera))
-                                      ],
-                                    ));
-                          });
-                    },
-                    child: Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          image: DecorationImage(
-                            image: editedContact.img != null
-                                ? FileImage(File(editedContact.img!))
-                                : const AssetImage("images/pp.png")
-                                    as ImageProvider,
-                          ),
-                        )),
-                  ),
-                  TextField(
-                    onChanged: (text) {
-                      setState(() {
-                        editedContact.name = text;
-                        // ignore: avoid_print
+                                              },
+                                              icon: const Icon(Icons.camera))
+                                        ],
+                                      ));
+                            });
+                      },
+                      child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            image: DecorationImage(
+                              image: editedContact.img != null
+                                  ? FileImage(File(editedContact.img!))
+                                  : const AssetImage("images/pp.png")
+                                      as ImageProvider,
+                            ),
+                          )),
+                    ),
+                    TextFormField(
+                      onChanged: (text) {
+                        setState(() {
+                          editedContact.name = text;
+                          // ignore: avoid_print
+                          _isEdited = true;
+                        });
+                      },
+                      controller: nameController,
+                      focusNode: nameNode,
+                      keyboardType: TextInputType.text,
+                      decoration: const InputDecoration(
+                          labelText: "Nome",
+                          labelStyle: TextStyle(color: Colors.black),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.amber),
+                          )),
+                    ),
+                    TextFormField(
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return "Campo obrigator";
+                        }
+                      },
+                      onChanged: (text) {
+                        editedContact.phone = text;
                         _isEdited = true;
-                      });
-                    },
-                    controller: nameController,
-                    focusNode: nameNode,
-                    keyboardType: TextInputType.text,
-                    decoration: const InputDecoration(
-                        labelText: "Nome",
-                        labelStyle: TextStyle(color: Colors.black),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.amber),
-                        )),
-                  ),
-                  TextField(
-                    onChanged: (text) {
-                      editedContact.phone = text;
-                      _isEdited = true;
-                    },
-                    controller: phoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                        labelText: "Telefone",
-                        labelStyle: TextStyle(color: Colors.black),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.amber),
-                        )),
-                  ),
-                  TextField(
-                    onChanged: (text) {
-                      editedContact.email = text;
-                      _isEdited = true;
-                    },
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                        labelText: "Email",
-                        labelStyle: TextStyle(color: Colors.black),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Colors.amber),
-                        )),
-                  ),
-                  Container(
-                    height: 20,
-                  ),
-                  SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: TextButton(
-                          onPressed: () {
-                            if (editedContact.name != null &&
-                                editedContact.name!.isNotEmpty) {
-                              Navigator.of(context).pop(editedContact);
-                            } else {
-                              FocusScope.of(context).requestFocus(nameNode);
-                            }
-                          },
-                          style: TextButton.styleFrom(
-                              backgroundColor: Colors.amber),
-                          child: const Text(
-                            "Salvar",
-                            style:
-                                TextStyle(color: Colors.black, fontSize: 17.0),
-                          )))
-                ]),
+                      },
+                      controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                          labelText: "Telefone",
+                          labelStyle: TextStyle(color: Colors.black),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.amber),
+                          )),
+                    ),
+                    TextFormField(
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return "Campo obrigator";
+                        }
+                      },
+                      onChanged: (text) {
+                        editedContact.email = text;
+                        _isEdited = true;
+                      },
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                          labelText: "Email",
+                          labelStyle: TextStyle(color: Colors.black),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.amber),
+                          )),
+                    ),
+                    Container(
+                      height: 20,
+                    ),
+                    SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: TextButton(
+                            onPressed: () {
+                              if (_key.currentState!.validate()) {
+                                if (editedContact.name != null &&
+                                    editedContact.name!.isNotEmpty) {
+                                  Navigator.of(context).pop(editedContact);
+                                } else {
+                                  FocusScope.of(context).requestFocus(nameNode);
+                                }
+                              }
+                            },
+                            style: TextButton.styleFrom(
+                                backgroundColor: Colors.amber),
+                            child: const Text(
+                              "Salvar",
+                              style: TextStyle(
+                                  color: Colors.black, fontSize: 17.0),
+                            )))
+                  ]),
+            ),
           ),
         ),
       ),

@@ -15,6 +15,8 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
+enum OrderBy { orderFromAtoZ, orderFromAZtoA }
+
 class _HomePageState extends State<HomePage> {
   ContactHelper contactHelper = ContactHelper();
 
@@ -47,7 +49,6 @@ class _HomePageState extends State<HomePage> {
     if (responseContact != null) {
       if (contact != null) {
         contactHelper.updateContact(responseContact);
-        print(responseContact.toMap());
       } else {
         contactHelper.saveContact(responseContact);
       }
@@ -133,6 +134,26 @@ class _HomePageState extends State<HomePage> {
         ),
         centerTitle: true,
         backgroundColor: Colors.amber,
+        actions: [
+          IconButton(
+            onPressed: () {
+              PopupMenuButton<OrderBy>(
+                  itemBuilder: (context) => <PopupMenuEntry<OrderBy>>[
+                        const PopupMenuItem<OrderBy>(
+                          child: Text("Ordenar de A-Z"),
+                          value: OrderBy.orderFromAtoZ,
+                        ),
+                        const PopupMenuItem<OrderBy>(
+                          child: Text("Ordenar de Z-A"),
+                          value: OrderBy.orderFromAZtoA,
+                        ),
+                      ],
+                  onSelected: orderbyName);
+            },
+            icon: const Icon(Icons.more_vert_rounded),
+            color: Colors.black,
+          )
+        ],
       ),
       body: ListView.builder(
           itemCount: listContacts.length,
@@ -150,6 +171,23 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void orderbyName(OrderBy result) {
+    switch (result) {
+      case OrderBy.orderFromAtoZ:
+        listContacts.sort((a, b) {
+          return a.name!.toLowerCase().compareTo(b.name!);
+        });
+        break;
+      case OrderBy.orderFromAZtoA:
+        listContacts.sort((a, b) {
+          return b.name!.toLowerCase().compareTo(a.name!);
+        });
+
+        break;
+      default:
+    }
+  }
+
   Widget contactCard(BuildContext contex, int index) {
     return Padding(
       padding: const EdgeInsets.all(7.0),
@@ -163,30 +201,34 @@ class _HomePageState extends State<HomePage> {
               Padding(
                 padding: const EdgeInsets.only(right: 10.0),
                 child: Container(
-                    width: 98,
-                    height: 98,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: DecorationImage(
-                          image: listContacts[index].img != null
-                              ? FileImage(File(listContacts[index].img!))
-                              : const AssetImage(
-                                  "images/pp.png",
-                                ) as ImageProvider),
-                    )),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    listContacts[index].name ?? "",
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.bold),
+                  width: 98,
+                  height: 98,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    image: DecorationImage(
+                      image: listContacts[index].img != null
+                          ? FileImage(File(listContacts[index].img!))
+                          : const AssetImage(
+                              "images/pp.png",
+                            ) as ImageProvider,
+                      fit: BoxFit.contain,
+                    ),
                   ),
-                  Text(listContacts[index].phone ?? ""),
-                  Text(listContacts[index].email ?? ""),
-                  Text("${listContacts[index].id}"),
-                ],
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      listContacts[index].name ?? "",
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    Text(listContacts[index].phone ?? ""),
+                    Text(listContacts[index].email ?? ""),
+                  ],
+                ),
               )
             ],
           ),
