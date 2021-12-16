@@ -1,8 +1,3 @@
-/*
-  This Class Contains all attributes and methods to init database Configuration
- */
-import 'dart:ffi';
-
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -26,11 +21,11 @@ class ContactHelper {
 
   // This varialble will contain DataBase Config
 
-  late Database _db;
+  Database? _db;
 
-  Future<Database> get db async {
+  Future<Database?> get db async {
     // ignore: unnecessary_null_comparison
-    if (db != null) {
+    if (_db != null) {
       return _db;
     }
 
@@ -44,39 +39,46 @@ class ContactHelper {
     final databasesPath = await getDatabasesPath();
 
     // Will join the local storage path with our database name
-    final path = join(databasesPath, "contact.db");
+    final path = join(databasesPath, "contactsBD.db");
 
     // Will open our database relatively our config, and will create our table at first
-    try {
-      return await openDatabase(path, version: 1,
-          onCreate: (Database db, int newerVersion) async {
-        db.execute('''CREATE TABLE $tableName(
-              $idColumn INTEGER,
+    return await openDatabase(path, version: 1,
+        onCreate: (Database db, int newerVersion) async {
+      db.execute('''CREATE TABLE $tableName(
+              $idColumn INTEGER PRIMARY KEY,
               $nameColumn TEXT, 
               $phoneColumn TEXT,
               $imgColumn TEXT,
               $emailColumn TEXT);''');
-      });
-    } catch (e) {
-      throw Exception(e);
-    }
+    });
   }
 
   Future<Contact> saveContact(Contact contact) async {
-    /*
-      THis method will save a contact into bd
-     */
-    Database dbContact = await db;
-    contact.id = await dbContact.insert(tableName, contact.toMap());
+    Database? dbContact = await db;
+    contact.id = await dbContact!.insert(tableName, contact.toMap());
     return contact;
   }
 
-  Future getContact(int id) async {
-    // Will return contact from past id
+  Future<List> getAllContacts() async {
+    Database? database = await db;
 
-    Database dbContact = await db;
+    List<Map<String, Object?>> contacts =
+        await database!.rawQuery("SELECT * FROM $tableName");
 
-    List<Map<String, dynamic>> maps = await dbContact.query(tableName,
+    List<Contact> listContacts = [];
+
+    for (var contact in contacts) {
+      listContacts.add(Contact.fromMap(contact));
+    }
+
+    return listContacts;
+  }
+
+  // Will return contact from past id
+  getContact(int id) async {
+    Database? dbContact = await db;
+
+    List<Map<String, dynamic>> maps = await dbContact!.query(tableName,
         columns: [idColumn, nameColumn, emailColumn, phoneColumn, imgColumn],
         where: "$idColumn = ?",
         whereArgs: [id]);
@@ -87,55 +89,47 @@ class ContactHelper {
     }
   }
 
-  Future<int> deleteContact(int id) async {
+  Future<int> deleteContact(int? id) async {
     /*
     Will delete a contact 
     The parameter id is required
   */
-    Database dbContact = await db;
-    return dbContact.delete(tableName, where: "$idColumn = ?", whereArgs: [id]);
+    Database? dbContact = await db;
+    return dbContact!
+        .delete(tableName, where: "$idColumn = ?", whereArgs: [id]);
   }
 
   Future<int> updateContact(Contact contact) async {
     /*
       Will update a contact
      */
-    Database dbContact = await db;
+    Database? dbContact = await db;
 
-    return await dbContact.update(tableName, contact.toMap(),
+    return await dbContact!.update(tableName, contact.toMap(),
         where: "$idColumn = ?", whereArgs: [contact.id]);
   }
 
-  Future<List<Contact>> getAllContacts() async {
-    /*
-      Will get all contacts from database
-     */
-    Database dbContact = await db;
-
-    List listMap = await dbContact.rawQuery("SELECT * FROM $tableName");
-
-    return listMap.map((contact) => Contact.fromMap(contact)).toList();
-  }
-
   totalRecords() async {
-    Database dbContact = await db;
+    Database? dbContact = await db;
     return Sqflite.firstIntValue(
-        await dbContact.rawQuery("SELECT COUNT(*) FROM $tableName"));
+        await dbContact!.rawQuery("SELECT COUNT(*) FROM $tableName"));
   }
 
   closeDB() async {
-    Database dbContact = await db;
-    dbContact.close();
+    Database? dbContact = await db;
+    dbContact!.close();
   }
 }
 
 class Contact {
-  late int id;
-  late String name;
-  late String email;
-  late String phone;
-  late String img;
+  int? id;
+  String? name;
+  String? email;
+  String? phone;
+  String? img;
+
   Contact();
+
   Contact.fromMap(Map<String, dynamic> map) {
     id = map[idColumn];
     name = map[nameColumn];
